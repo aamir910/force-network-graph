@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Force-Directed Network Graph</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <style>
+      .link {
+        stroke: #999;
+        stroke-opacity: 2;
+      }
+
+      .node {
+        stroke: #fff;
+        stroke-width: 1.5px;
+      }
+
+      .legend {
+        font-size: 12px;
+        margin: 5px;
+        margin-top: 50px;
+        border-radius: 5px;
+        border: 2px solid black;
+        padding: 10px;
+        min-width: 200px;
+      }
+
+      .legend-item {
+        /* margin-bottom: 5px; */
+      }
+
+      .legend-circle {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+      }
+      .legend-line {
+        display: inline-block;
+        width: 15px;
+        height: 3px;
+        /* border-radius: 50%; */
+        margin-right: 5px;
+      }
+      .forcenetwork {
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="forcenetwork">
+      <div class="flex row col-12">
+        <h1 class="ml-4">Force Network Graph</h1>
+        <div class="col-10">
+          <svg id="svg" width="960" height="600"></svg>
+        </div>
+        <div class="col-1">
+          <div class="legend">
+            <h5>Student</h5>
+            <div class="legend-item">
+              <div
+                class="legend-circle"
+                style="background-color: #1f77b4"></div>
+              Male
+            </div>
+            <div class="legend-item">
+              <div
+                class="legend-circle"
+                style="background-color: #2ca02c"></div>
+              Female
+            </div>
+
+            <h5>Department</h5>
+            <div class="legend-item">
+              <div class="legend-circle" style="background-color: red"></div>
+              BCA
+            </div>
+            <div class="legend-item">
+              <div class="legend-circle" style="background-color: purple"></div>
+              B.com Accounting and Finance
+            </div>
+            <div class="legend-item">
+              <div class="legend-circle" style="background-color: orange"></div>
+              Commerce
+            </div>
+            <div class="legend-item">
+              <div class="legend-circle" style="background-color: blue"></div>
+              B.com ISM
+            </div>
+            <h5>Financial Status</h5>
+            <div class="legend-item">
+              <div class="legend-line" style="background-color: skyblue"></div>
+              Bad
+            </div>
+            <div class="legend-item">
+              <div class="legend-line" style="background-color: blue"></div>
+              Good
+            </div>
+            <div class="legend-item">
+              <div class="legend-line" style="background-color: purple"></div>
+              Aweful
+            </div>
+            <div class="legend-item">
+              <div class="legend-line" style="background-color: yellow"></div>
+              Fabulous
+            </div>
+            <div class="legend-item">
+              <div class="legend-line" style="background-color: orange"></div>
+              Fantastic
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const svg = d3.select("#svg"),
+        width = +svg.attr("width"),
+        height = +svg.attr("height");
+
+      let studentCount = 1;
+      const simulation = d3
+        .forceSimulation()
+        .force(
+          "link",
+          d3.forceLink().id((d) => d.id)
+        )
+        .force("charge", d3.forceManyBody().strength(-5))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+      d3.csv("Student_Attitude_and_Behavior.csv").then(function (graph) {
+        let nodes = [];
+        let links = [];
+
+        const uniqueData1 = new Set();
+        graph.forEach((item) => {
+          console.log(graph, "here is the data ");
+          if (!uniqueData1.has(item.Department)) {
+            uniqueData1.add(item.Department);
+            let color;
+            switch (item.Department) {
+              case "BCA":
+                color = "red";
+                break;
+              case "B.com Accounting and Finance ":
+                color = "purple";
+                break;
+              case "Commerce":
+                color = "orange";
+                break;
+              case "B.com ISM":
+                color = "blue";
+                break;
+              default:
+                color = "black";
+            }
+            nodes.push({
+              id: item.Department,
+              type: "department",
+              color: color,
+            });
+            links.push({
+              source: "BCA",
+              target: `Commerce`,
+              type: item["Financial Status"],
+              distance: 200,
+            });
+            links.push({
+              source: "B.com ISM",
+              target: `Commerce`,
+              type: item["Financial Status"],
+              distance: 200,
+            });
+            links.push({
+              source: "B.com ISM",
+              target: `B.com Accounting and Finance `,
+              type: item["Financial Status"],
+              distance: 200,
+            });
+          }
+          links.push({
+            source: item.Department,
+            target: `student${studentCount}`,
+            type: item["Financial Status"],
+            distance: Math.random() * 50,
+          });
+
+          nodes.push({
+            id: `student${studentCount}`,
+            type: "student",
+            Gender: item.Gender,
+            Department: item.Department,
+            hobbies : item.hobbies,
+          social  : item["social medai & video"],
+          Weight: item["Weight(KG)"],
+          studies:item["prefer to study in"]
+           });
+          studentCount++;
+        });
+        console.log(links, "here is the link");
+
+        const link = svg
+          .append("g")
+          .attr("class", "links")
+          .selectAll("line")
+          .data(links)
+          .enter()
+          .append("line")
+          .attr("class", "link").style("stroke-width", 3)   
+
+          .attr("distance", (d) => d.distance)
+          .attr("distance", 50) // Add a distance attribute
+          .style("stroke", (d) => {
+            if (d.type === "Bad") {
+              return "skyblue";
+            } else if (d.type === "Good") {
+              return "blue";
+            } else if (d.type === "Awful") {
+              return "purple";
+            } else if (d.type === "Fabulous") {
+              return "yellow";
+            } else if (d.type === "Fantastic") {
+              return "orange";
+            } else {
+              return "grey"; // Default color
+            }
+          });
+
+        const node = svg
+          .append("g")
+          .attr("class", "nodes")
+          .selectAll("circle")
+          .data(nodes)
+          .enter()
+          .append("circle")
+          .attr("class", "node")
+          .attr("r", (d) => (d.type === "department" ? 20 : 8))
+          .attr("fill", (d) =>
+            d.Gender === "Male"
+              ? "#1f77b4"
+              : d.type === "department"
+              ? d.color
+              : "#2ca02c"
+          ) // Fill blue if gender is male, department color if it's a department node, otherwise fill green
+          .call(drag(simulation));
+
+       node.filter(d=> d.type ==="student").append("title")
+  .html((d) => {
+    return `<div style="text-align: left; font-family: Arial, sans-serif;">
+              <strong>Student ID:</strong> ${d.id} <br/>
+              <strong>Hobbies:</strong> ${d.hobbies} <br/>
+              <strong>Weight (KG):</strong> ${d.Weight} <br/>
+              <strong>Prefer to study in:</strong> ${d.studies} <br/>
+              <strong>Social media & Video:</strong> ${d.social} <br/>
+            </div>`;
+  });
+
+
+        simulation.nodes(nodes).on("tick", ticked);
+
+        simulation
+          .force("link")
+          .links(links)
+          .distance((d) => d.distance + 80); // Increase the link distance
+
+        function ticked() {
+          link
+            .attr("x1", (d) => d.source.x)
+            .attr("y1", (d) => d.source.y)
+            .attr("x2", (d) => d.target.x)
+            .attr("y2", (d) => d.target.y);
+
+          node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+        }
+      });
+
+      function drag(simulation) {
+        function dragstarted(event) {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          event.subject.fx = event.subject.x;
+          event.subject.fy = event.subject.y;
+        }
+
+        function dragged(event) {
+          event.subject.fx = event.x;
+          event.subject.fy = event.y;
+        }
+
+        function dragended(event) {
+          if (!event.active) simulation.alphaTarget(0);
+          event.subject.fx = null;
+          event.subject.fy = null;
+        }
+
+        return d3
+          .drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended);
+      }
+    </script>
+  </body>
+</html>
